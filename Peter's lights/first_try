@@ -1,0 +1,90 @@
+#include <stdbool.h>
+int pos_steering;
+
+// brzdova svetla bych rad udelal tak, ze do jedne promenne
+// ulozim to, ze se jede kupredu
+// pokud dalsi cyklus jedem pomaleji, sviti brzdy
+
+int l_cntr_max = 100; // max for lights counter
+int l_cntr = 0; // lights counter - higher for longer intervals
+bool l_l_on = false; // switch for changing left light on/of
+bool steering_left = false;
+bool r_l_on = false; // switch for changing right light on/of
+bool steering_right = false;
+
+int n_v = 1500; // neutral_value
+int d_z = 50; // dead_zone value
+
+void setup() {
+    pinMode(5, INPUT); // steering
+    pinMode(12, OUTPUT); // left turn signal
+    pinMode(13, OUTPUT); // right turn signal
+    Serial.begin(9600);
+    }
+
+void loop() {
+    // first a wall we have to load values from pins
+    pos_steering = pulseIn(5, HIGH, 10)
+    if (!pos_steering) {pos_steering = n_v;};
+
+    // let's start with turn signals.
+    if (pos_steering < (n_v - d_z)) {
+    //car is steering left
+        if (steering_right) {
+        // previous action was steering right
+            steering_right = false;
+            r_l_on = false; //reset right steering
+            l_cntr = 0;
+            digitalWrite(12, LOW);
+            }
+        else if (steering_left && l_l_on) {
+        // previous action was steering left, lights on
+            if (l_cntr < l_cntr_max) {
+            // i want to keep lights turned on
+                l_cntr++;
+                }
+            else {
+            // i want to turn lights off
+                l_cntr = 0;
+                l_l_on = false;
+                digitalWrite(13, LOW);
+                }
+            }
+        else if (steering_left) {
+        // previous action was steering left, lights off
+            if (l_cntr < l_cntr_max) {
+            // want to keep lights off
+                l_cntr++;
+                }
+            else {
+            // want to turn signals on
+                l_cntr = 0;
+                l_l_on = true;
+                digitalWrite(13,HIGH);
+                }
+            }
+        else {
+        // just turn signals on and
+            steering_left = true;
+            l_l_on = true;
+            l_cntr++;
+            digitalWrite(13,HIGH);
+            }
+        }
+    else if ((n_v - dead_zone) <=  pos_steering  <= (n_v + dead_zone)) {
+        // steering is in dead zone, all turn signals switch off
+        // yes, we could check wheter something is on, but this is faster
+        steering_left = false;
+        steering_right = false;
+        l_l_on = false;
+        r_l_on = false;
+        l_cntr = 0;
+        digitalWrite(13, LOW);
+        digitalWrite(12, LOW);
+        }
+    else if (pos_steering > (n_v + dead_zone)) {
+        // steering right
+        // not implemented yet
+        printf("Fuck her in the armpit!")
+        }
+    }
